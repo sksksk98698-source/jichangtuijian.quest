@@ -77,11 +77,15 @@ const averageRounded = Math.round(average);
         ))
       }
     </div>
-    <p class="review-link">
-      <a href={reviews.allReviewsUrl} target="_blank" rel="noopener noreferrer">
-        {ui.readAllReviews}
-      </a>
-    </p>
+    {
+      reviews.allReviewsUrl && !reviews.allReviewsUrl.includes("EXAMPLE") && (
+        <p class="review-link">
+          <a href={reviews.allReviewsUrl} target="_blank" rel="noopener noreferrer">
+            {ui.readAllReviews}
+          </a>
+        </p>
+      )
+    }
   </div>
 </section>
 

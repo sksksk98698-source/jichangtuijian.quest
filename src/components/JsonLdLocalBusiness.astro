@@ -1,12 +1,6 @@
 ---
-// schema.org "LocalBusiness" structured data — THE component that moves the
-// needle in local SEO. Google uses it for the business panel in search
-// results (hours, phone, reviews...). Everything is generated from
-// SITE.business and SITE.openingHours: no data to maintain twice.
-// Validate with: https://search.google.com/test/rich-results
 import { SITE } from "../config/site";
 
-// schema.org names days in English
 const SCHEMA_DAYS = [
   "Monday",
   "Tuesday",
@@ -17,9 +11,7 @@ const SCHEMA_DAYS = [
   "Sunday",
 ];
 
-// Turn the site's opening hours into OpeningHoursSpecification entries,
-// skipping closing days.
-const hoursSchema = SITE.openingHours
+const hoursSchema = (SITE.openingHours || [])
   .filter((h) => !h.closed && h.opens && h.closes)
   .map((h) => ({
     "@type": "OpeningHoursSpecification",
@@ -28,31 +20,63 @@ const hoursSchema = SITE.openingHours
     closes: h.closes,
   }));
 
-const data = {
+const validSameAs = [
+  ...(SITE.business.socialProfiles || []),
+  SITE.business.googleBusinessUrl,
+].filter(
+  (u): u is string =>
+    typeof u === "string" &&
+    u.trim().length > 0 &&
+    !u.includes("example.com") &&
+    !u.includes("EXAMPLE")
+);
+
+const data: Record<string, unknown> = {
   "@context": "https://schema.org",
-  "@type": SITE.business.schemaType,
+  "@type": SITE.business.schemaType || "Organization",
   name: SITE.name,
   description: SITE.description,
   url: SITE.url,
-  telephone: SITE.business.phone,
-  email: SITE.business.email,
   image: new URL(SITE.hero.image, SITE.url).href,
-  priceRange: SITE.business.priceRange,
-  address: {
+};
+
+if (SITE.business.phone) {
+  data.telephone = SITE.business.phone;
+}
+
+if (SITE.business.email) {
+  data.email = SITE.business.email;
+}
+
+if (SITE.business.priceRange) {
+  data.priceRange = SITE.business.priceRange;
+}
+
+if (SITE.business.address?.city || SITE.business.address?.country) {
+  data.address = {
     "@type": "PostalAddress",
-    streetAddress: SITE.business.address.street,
-    postalCode: SITE.business.address.postalCode,
-    addressLocality: SITE.business.address.city,
-    addressCountry: SITE.business.address.country,
-  },
-  geo: {
+    streetAddress: SITE.business.address.street || undefined,
+    postalCode: SITE.business.address.postalCode || undefined,
+    addressLocality: SITE.business.address.city || undefined,
+    addressCountry: SITE.business.address.country || undefined,
+  };
+}
+
+if (SITE.business.geo?.latitude && SITE.business.geo?.longitude) {
+  data.geo = {
     "@type": "GeoCoordinates",
     latitude: SITE.business.geo.latitude,
     longitude: SITE.business.geo.longitude,
-  },
-  openingHoursSpecification: hoursSchema,
-  sameAs: [...SITE.business.socialProfiles, SITE.business.googleBusinessUrl],
-};
+  };
+}
+
+if (hoursSchema.length > 0) {
+  data.openingHoursSpecification = hoursSchema;
+}
+
+if (validSameAs.length > 0) {
+  data.sameAs = validSameAs;
+}
 ---
 
 <script is:inline type="application/ld+json" set:html={JSON.stringify(data)} />

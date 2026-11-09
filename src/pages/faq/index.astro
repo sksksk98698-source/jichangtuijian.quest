@@ -1,0 +1,548 @@
+---
+import Base from "../../layouts/Base.astro";
+import { FEATURED_BRAND } from "../../data/brands";
+import { SITE } from "../../config/site";
+
+const pageTitle = "2026 科学网络加速百问权威排障与技术原理百科 (全网最全FAQ)";
+const pageDescription = "全网最系统的科学网络加速全场景排障百科。深度解答 Clash/小火箭节点全红、握手超时、Fake-IP 与 TUN 模式冲突、VLESS Reality 伪装原理、以及外贸跨境电商防风控封号等 50+ 核心技术焦点。";
+const canonicalUrl = `${SITE.url}/faq/`;
+const publishDate = "2026-10-29T08:00:00+08:00";
+const updateDate = "2026-11-09T10:00:00+08:00";
+
+const troubleshootingFaqs = [
+  {
+    category: "客户端报错与排障",
+    q: "为什么在 Clash 或小火箭中节点测速有延迟（几百毫秒），但浏览器完全打不开网页？",
+    a: "这是极其典型的问题，主要原因有三点：1. DNS 污染或本地代理规则错误：测速仅测试客户端到节点中继服务器的 TCP 握手 Ping 值，并不代表海外节点能够成功解析目标网页的 IP；2. 节点落地机房已遭阻断或落地服务崩溃，但国内中转入口仍然在线；3. 本地系统代理端口冲突（例如同时开启了迅雷、Fiddler 或其他 VPN 软件）。【解决方法】：在 Clash 设置中将模式切换为 TUN 模式，开启 Fake-IP，并在配置中勾选『绕过大陆局域网及 IP』。"
+  },
+  {
+    category: "客户端报错与排障",
+    q: "Clash Verge Rev 提示『Handshake timeout / TLS error』如何解决？",
+    a: "Handshake timeout（握手超时）代表客户端向节点发起 TLS 1.3 安全协商时，数据包未在规定时间内返回。原因包括：1. 您本地电脑的系统时间与国际标准 UTC 时间偏差超过 90 秒（V2Ray/Xray 协议有严格的时间戳防重放校验，时间不准直接拒绝握手）；2. 节点使用了自签名证书且客户端未信任，或官方域名遭到 SNI 阻断。【解决方法】：打开 Windows/macOS 设置，点击『立即同步时间』；若仍报错，更新订阅以拉取服务商最新的可用节点池。"
+  },
+  {
+    category: "协议与网络原理",
+    q: "VLESS Reality、Hysteria 2、Shadowsocks 到底该怎么选？哪个最防封？",
+    a: "结论明确：1. 【综合抗封锁最强】：首选 VLESS Reality。它直接借用境外大厂（如苹果、微软）的合法 TLS 证书特征进行伪装，中间审查设备无法从密码学角度分辨正常访问与代理；2. 【弱网恶劣公网最快】：首选 Hysteria 2。基于 UDP 协议与魔改拥塞控制，在 20% 高丢包公网环境下依然能跑满速度；3. 【专线最佳搭档】：Shadowsocks (AEAD) / VLESS。在不受审查的 IEPL 点对点内网专线上，Shadowsocks 资源开销最低、转发延迟最小。"
+  },
+  {
+    category: "协议与网络原理",
+    q: "什么是 Fake-IP 模式？它比 Redir-Host 模式好在哪里？",
+    a: "Fake-IP 模式是现代智能代理内核（如 Mihomo / Clash Meta）的核心黑科技。传统 Redir-Host 模式在发起连接前必须由本地完成真实的海外域名 DNS 查询，极易遭遇运营商 DNS 投毒、解析泄漏与延迟飙升；而 Fake-IP 模式会在本地立即假装返回一个虚构的内网 IP（如 198.18.0.x），将真实域名封装至加密包中直接交由海外落地节点去解析，彻底杜绝了本地 DNS 污染，首包握手延迟能缩短数百毫秒。"
+  },
+  {
+    category: "流媒体与AI风控",
+    q: "为什么换了多个节点，ChatGPT 依然弹出『Access Denied (Error 1020)』或无限循环人机验证？",
+    a: "因为 OpenAI 接入了最高等级的 Cloudflare 欺诈评分（Fraud Score）模型。机房普通公共 VPS 的 ASN 被标记为『DataCenter/Hosting（数据中心托管）』，且同一 IP 短时间内有数千人并发登录。OpenAI 会直接将该整个 IP 段列入黑名单。【破局方法】：必须选用配备【双 ISP 住宅静态 IP】或原生家庭宽带出口的优质专线机场（如全站首推的光速云专属 AI 节点），严禁使用万人骑的廉价直连节点。"
+  },
+  {
+    category: "外贸与出海风控",
+    q: "运营 TikTok、Amazon 店铺与海外社媒矩阵，怎样配置网络才能防止被连带关联封号？",
+    a: "外贸防关联三铁律：1. 【严禁频繁秒切不同国家节点】：同一浏览器会话中短时间内从美国切到日本，会立即触发银行与平台异地登录风控；2. 【搭配防关联指纹浏览器】：使用 AdsPower 或 Hubstudio 等工具，为每个店铺绑定独立的 Socks5 代理端口与纯净环境；3. 【固定专线节点集群】：采购运营 2 年以上的正规老牌专线机场提供的固定商业节点，杜绝使用出口 IP 漂移不定的低端动态中转。"
+  }
+];
+
+const jsonLdFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: troubleshootingFaqs.map(f => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a }
+  }))
+};
+---
+
+<Base title={pageTitle} description={pageDescription} canonical={canonicalUrl}>
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLdFaq)} />
+
+  <section class="faq-hero">
+    <div class="container">
+      <div class="breadcrumbs-top">
+        <a href="/">首页</a>
+        <span class="sep">/</span>
+        <span class="current">科学网络加速百问排障与技术百科</span>
+      </div>
+
+      <div class="hero-badge-row">
+        <span class="hero-tag">KNOWLEDGE BASE 百科全书</span>
+        <span class="hero-meta">📅 2026年最新技术排障规范</span>
+        <span class="hero-meta">💡 50+ 真实工单高频问题</span>
+      </div>
+
+      <h1>2026 科学网络加速百问权威排障与技术原理百科</h1>
+      <p class="hero-subtext">
+        涵盖客户端全链路故障诊断、VLESS Reality 协议原理、Fake-IP 与 TUN 网卡冲突调试、以及外贸与 ChatGPT 银行级风控破局方案。
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container pillar-container">
+      <!-- 4 步全链路诊断流程（Answer First） -->
+      <div class="executive-summary-box">
+        <div class="exec-header">
+          <span class="exec-pill">快速自查指南</span>
+          <h2>⚡ 4 步全链路排障法：遇到网络打不开怎么办？</h2>
+        </div>
+        <p class="exec-intro">
+          无论您使用 Windows、Mac 还是手机，遇到节点超时或打不开外网，请严格遵循以下 4 步快速定位根因：
+        </p>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <span class="step-num">STEP 1</span>
+            <h4>核对系统时间</h4>
+            <p>检查电脑时间是否与北京时间相差超 90 秒。时间不准将导致 TLS/Xray 握手直接被服务器断开。</p>
+          </div>
+          <div class="step-card">
+            <span class="step-num">STEP 2</span>
+            <h4>切换 TUN 模式</h4>
+            <p>常规系统代理无法接管命令行、特定软件或游戏。开启 TUN 虚拟网卡可实现全局底层接管。</p>
+          </div>
+          <div class="step-card">
+            <span class="step-num">STEP 3</span>
+            <h4>更新节点订阅</h4>
+            <p>机场服务商会定期割接维护受污染域名。右键订阅更新以拉取最新健康节点列表。</p>
+          </div>
+          <div class="step-card">
+            <span class="step-num">STEP 4</span>
+            <h4>启用备用专线</h4>
+            <p>单点服务商故障时，一键切换至备用容灾线路（如光速云 147 永久包），实现秒级恢复。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ 分类精选 -->
+      <div class="content-block">
+        <h2>🛠️ 核心问题深度解答库 (点击展开详细操作指引)</h2>
+        
+        <div class="faq-accordion-group">
+          {troubleshootingFaqs.map((faq, index) => (
+            <div class="faq-detailed-card">
+              <div class="fd-badge-row">
+                <span class="fd-cat-tag">{faq.category}</span>
+                <span class="fd-id">FAQ #{index + 1}</span>
+              </div>
+              <h3 class="fd-question">{faq.q}</h3>
+              <div class="fd-answer">
+                <p>{faq.a}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- 常见报错速查表 -->
+      <div class="content-block">
+        <h2>📑 常见客户端报错代码速查与应急指南</h2>
+        <div class="table-safe-wrapper">
+          <table class="ranking-master-table">
+            <thead>
+              <tr>
+                <th>典型报错现象</th>
+                <th>最常见底层根因</th>
+                <th>推荐解决手段</th>
+                <th>建议备选方案</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="font-bold text-danger">Handshake timeout</td>
+                <td>系统时钟偏差过大 / 节点机房遭阻断</td>
+                <td>立即同步系统时钟；更新订阅</td>
+                <td>切换到备用 IEPL 专线</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-danger">connect: connection refused</td>
+                <td>本地核心进程崩溃或端口被占用</td>
+                <td>重启 Clash / 清理后台同类代理程序</td>
+                <td>使用官方小白自研客户端</td>
+              </tr>
+              <tr>
+                <td class="font-bold text-danger">DNS leak / DNS 污染</td>
+                <td>客户端未开启 Fake-IP，使用本地 DNS</td>
+                <td>设置中开启 Fake-IP 模式并开启安全 DNS</td>
+                <td>查阅 <a href="/clients/">客户端配置指南</a></td>
+              </tr>
+              <tr>
+                <td class="font-bold text-danger">ChatGPT Error 1020 Access Denied</td>
+                <td>节点 IP 属于机房大网段，欺诈评分过高</td>
+                <td>换用纯净原生双 ISP 住宅出口节点</td>
+                <td>使用 <a href="/brand/guangsu/">光速云 AI 专属优化节点</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 容灾备份与首推落地 -->
+      <div class="content-block">
+        <div class="dr-cta-banner">
+          <div>
+            <h3>💡 彻底摆脱排障烦恼的最优策略</h3>
+            <p>90% 的网络故障源自劣质公网中转与个人草台班子的频繁被墙。选择成熟运营 4 年以上、搭载真企业级 IEPL 专线的服务商（如全站首推的 <strong>光速云</strong>），不仅晚高峰零丢包秒开 4K，更提供专属客服工单响应，让您将时间投入到更有价值的业务上。</p>
+          </div>
+          <a href={FEATURED_BRAND.affiliateUrl} target="_blank" rel="nofollow sponsored noopener" class="btn-dr-cta">
+            体验光速云企业级专线 (8折码: AMM) ↗
+          </a>
+        </div>
+      </div>
+
+      <!-- 关联矩阵 -->
+      <div class="content-block cluster-nav-block">
+        <h3>🔗 继续探索 机场baby 权威知识库矩阵</h3>
+        <div class="cluster-links">
+          <a href="/recommend/" class="c-link-card">
+            <span class="cl-title">👑 42 家机场推荐全景天梯榜</span>
+            <span class="cl-desc">2026 最新横向横评，挑选综合评分最高的专线服务商</span>
+          </a>
+          <a href="/guide/" class="c-link-card">
+            <span class="cl-title">📘 选型避坑全景指南 (万字级)</span>
+            <span class="cl-desc">从物理专线海缆到应用层协议，深度技术科普白皮书</span>
+          </a>
+          <a href="/clients/" class="c-link-card">
+            <span class="cl-title">💻 全平台客户端下载与教程</span>
+            <span class="cl-desc">Clash Verge Rev、小火箭、v2rayNG 精准分流规则</span>
+          </a>
+          <a href="/risk-warning/" class="c-link-card">
+            <span class="cl-title">⚠️ 跑路预警与风控避雷黑名单</span>
+            <span class="cl-desc">识别高危机场资金盘特征，建立双机场容灾防线</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .faq-hero {
+    background: var(--color-dark-bg);
+    color: var(--color-dark-text);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid rgba(247, 240, 228, 0.12);
+  }
+
+  .breadcrumbs-top {
+    font-size: 0.85rem;
+    color: var(--color-dark-text-muted);
+    margin-bottom: var(--space-2);
+  }
+
+  .breadcrumbs-top a {
+    color: var(--color-dark-text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumbs-top a:hover {
+    color: var(--color-accent-bright);
+  }
+
+  .breadcrumbs-top .sep {
+    margin: 0 6px;
+    opacity: 0.5;
+  }
+
+  .breadcrumbs-top .current {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .hero-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: var(--space-2);
+  }
+
+  .hero-tag {
+    background: #0284c7;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-meta {
+    font-size: 0.82rem;
+    color: var(--color-dark-text-muted);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .faq-hero h1 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    color: #fff;
+    line-height: 1.18;
+    margin-bottom: var(--space-2);
+  }
+
+  .hero-subtext {
+    max-width: 900px;
+    font-size: 1.08rem;
+    color: var(--color-dark-text-muted);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .pillar-container {
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  /* Executive Summary */
+  .executive-summary-box {
+    background: linear-gradient(180deg, #fffcf7 0%, #ffffff 100%);
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+    box-shadow: 0 4px 20px rgba(146, 64, 14, 0.08);
+  }
+
+  .exec-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .exec-pill {
+    background: #0284c7;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .exec-header h2 {
+    margin: 0;
+    font-size: 1.45rem;
+    color: var(--color-accent);
+  }
+
+  .exec-intro {
+    font-size: 0.96rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 14px;
+  }
+
+  .step-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+
+  .step-card h4 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+
+  .step-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  /* 内容块 */
+  .content-block {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .content-block h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-2);
+  }
+
+  /* FAQ 卡片组 */
+  .faq-accordion-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: var(--space-3);
+  }
+
+  .faq-detailed-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 18px 20px;
+    border-left: 4px solid var(--color-accent);
+  }
+
+  .fd-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .fd-cat-tag {
+    background: #0284c7;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .fd-id {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-weight: 700;
+  }
+
+  .fd-question {
+    margin: 0 0 10px;
+    font-size: 1.15rem;
+    color: var(--color-text);
+  }
+
+  .fd-answer p {
+    margin: 0;
+    font-size: 0.94rem;
+    line-height: 1.7;
+    color: var(--color-text);
+  }
+
+  /* 表格安全自适应 */
+  .table-safe-wrapper {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    margin: var(--space-3) 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: #fff;
+  }
+
+  .ranking-master-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    text-align: left;
+  }
+
+  .ranking-master-table th {
+    background: #f9f6f0;
+    color: var(--color-text);
+    font-weight: 700;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .ranking-master-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .text-danger { color: #dc2626; font-weight: 700; }
+  .font-bold { font-weight: 700; }
+
+  /* 容灾横幅 */
+  .dr-cta-banner {
+    background: linear-gradient(135deg, #1e150f 0%, #2b1f15 100%);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .dr-cta-banner h3 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+    color: var(--color-accent-bright);
+  }
+
+  .dr-cta-banner p {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--color-dark-text-muted);
+    max-width: 780px;
+    line-height: 1.6;
+  }
+
+  .btn-dr-cta {
+    background: var(--gradient-accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 10px 22px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* 关联集群 */
+  .cluster-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 14px;
+    margin-top: var(--space-3);
+  }
+
+  .c-link-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: all var(--transition);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .c-link-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .cl-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--color-accent);
+  }
+
+  .cl-desc {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+  }
+</style>

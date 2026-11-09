@@ -1,14 +1,17 @@
 ---
-// Practical info section: opening hours + address + map link.
-// The map is a link to Google Maps rather than an embedded iframe:
-// no third-party cookies on page load = simple GDPR story and a fast page.
 import { SITE } from "../../config/site";
 
 const { openingHours, business, ui } = SITE;
 
+const hasAddress = Boolean(business.address.street || business.address.city);
+const destinationStr = `${SITE.name} ${business.address.street || ""} ${business.address.city || ""}`.trim();
 const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-  `${SITE.name} ${business.address.street} ${business.address.city}`
+  destinationStr
 )}`;
+const hasGoogleBusiness = Boolean(
+  business.googleBusinessUrl &&
+  !business.googleBusinessUrl.includes("EXAMPLE")
+);
 ---
 
 <section id="info" class="section section-alt">
@@ -21,7 +24,7 @@ const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${enco
         <table class="hours-table">
           <tbody>
             {
-              openingHours.map((h) => (
+              (openingHours || []).map((h) => (
                 <tr>
                   <th scope="row">{h.label}</th>
                   <td>{h.closed ? ui.closedLabel : `${h.opens} – ${h.closes}`}</td>
@@ -34,25 +37,40 @@ const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${enco
 
       <div class="card">
         <h3>{ui.findUsTitle}</h3>
-        <p>
-          {business.address.street}<br />
-          {business.address.postalCode} {business.address.city}
-        </p>
-        <p>
-          <a href={`tel:${business.phone}`}>{business.phone}</a>
-        </p>
+        {hasAddress ? (
+          <p>
+            {business.address.street && <>{business.address.street}<br /></>}
+            {business.address.postalCode} {business.address.city}
+          </p>
+        ) : (
+          <p>在线客服与技术支持全天候响应，欢迎通过邮件咨询。</p>
+        )}
+        {business.phone && (
+          <p>
+            <a href={`tel:${business.phone}`}>{business.phone}</a>
+          </p>
+        )}
+        {business.email && (
+          <p>
+            <a href={`mailto:${business.email}`}>{business.email}</a>
+          </p>
+        )}
         <p class="info-actions">
-          <a class="button" href={directionsUrl} target="_blank" rel="noopener noreferrer">
-            {ui.directionsLabel}
-          </a>
-          <a
-            class="button button-secondary"
-            href={business.googleBusinessUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {ui.googleProfileLabel}
-          </a>
+          {hasAddress && (
+            <a class="button" href={directionsUrl} target="_blank" rel="noopener noreferrer">
+              {ui.directionsLabel}
+            </a>
+          )}
+          {hasGoogleBusiness && (
+            <a
+              class="button button-secondary"
+              href={business.googleBusinessUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {ui.googleProfileLabel}
+            </a>
+          )}
         </p>
       </div>
     </div>

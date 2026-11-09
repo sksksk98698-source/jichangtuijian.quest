@@ -1,0 +1,362 @@
+---
+import Base from "../../layouts/Base.astro";
+import { CLIENT_APPS, CLIENT_PLATFORMS } from "../../data/clients";
+import { SITE } from "../../config/site";
+
+const title = "2026 机场代理客户端大全与下载教程 — 全平台配置指南";
+const description = "涵盖 Windows、Mac、iOS、Android、Linux 及 OpenWrt 软路由的主流代理客户端下载。详细介绍 Clash Verge Rev、v2rayN、Shadowrocket 小火箭、v2rayNG、sing-box 的安装与订阅导入指南。";
+---
+
+<Base title={title} description={description}>
+  <section class="clients-hero">
+    <div class="container">
+      <p class="section-eyebrow">CLIENT HUBS & DOWNLOADS</p>
+      <h1>2026 机场代理客户端大全与下载教程</h1>
+      <p class="hero-desc">
+        无论您使用的是 Windows 电脑、iPhone/iPad、安卓手机、Mac 苹果电脑还是软路由系统，均可在这里找到最适合、持续维护的官方及开源客户端下载入口与一键配置教程。
+      </p>
+
+      <div class="platform-tabs-nav">
+        {CLIENT_PLATFORMS.map((p, idx) => (
+          <button class={`platform-tab ${idx === 0 ? "active" : ""}`} data-platform={p.id}>
+            {p.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <!-- 客户端网格 -->
+      <div class="clients-grid" id="clients-container">
+        {CLIENT_APPS.map((app) => (
+          <div class="client-card" data-cat={app.category.toLowerCase()}>
+            <div class="client-card-header">
+              <div>
+                <span class="client-os-badge">{app.category}</span>
+                <h3 class="client-name">{app.name}</h3>
+                <p class="client-core">{app.core}</p>
+              </div>
+              <span class={`license-pill ${app.license === "开源免费" ? "pill-free" : "pill-paid"}`}>
+                {app.license}
+              </span>
+            </div>
+
+            <p class="client-desc">{app.features}</p>
+
+            <div class="badges-row">
+              {app.platformBadges.map((badge) => (
+                <span class="feat-badge">{badge}</span>
+              ))}
+            </div>
+
+            <div class="setup-accordion">
+              <details>
+                <summary>查看 3 步快速配置流程</summary>
+                <ol class="steps-mini-list">
+                  {app.guideSteps.map((step) => (
+                    <li>{step}</li>
+                  ))}
+                </ol>
+              </details>
+            </div>
+
+            <div class="client-actions">
+              <a
+                href={app.githubOrDocUrl}
+                target="_blank"
+                rel="nofollow noopener noreferrer"
+                class="btn-client btn-client-dl"
+              >
+                下载客户端 ↗
+              </a>
+              <a href="/brand/guangsu/" class="btn-client btn-client-sub">
+                获取光速云订阅
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <!-- 客户端使用避坑与技术要点 -->
+      <div class="clients-faq-block card">
+        <h2>客户端常见问题与核心技术建议</h2>
+        <div class="grid-2">
+          <div>
+            <h4>1. Clash for Windows (CFW) 还能用吗？</h4>
+            <p class="text-sm text-muted">
+              CFW 原项目已停更归档。推荐全面迁移至 <strong>Clash Verge Rev</strong>，其基于积极维护的 Mihomo (Meta) 内核，完美解决 Win11 内存泄露并原生支持新协议与 TUN 网卡模式。
+            </p>
+          </div>
+          <div>
+            <h4>2. 什么是 TUN 模式？为什么打游戏或用命令行必须开？</h4>
+            <p class="text-sm text-muted">
+              普通系统代理仅接管浏览器等支持 HTTP/SOCKS 协议的软件。TUN 模式会创建虚拟网卡接管操作系统全部 TCP/UDP 流量，让终端命令行、Steam 游戏及未适配代理的应用无缝加速。
+            </p>
+          </div>
+          <div>
+            <h4>3. iOS 无法在国区 App Store 搜索到小火箭？</h4>
+            <p class="text-sm text-muted">
+              由于政策限制，Shadowrocket、Stash 等代理软件仅上架非国区（美区/港区/日区）。您需要注册或借用海外 Apple ID，并在 App Store 购买（约 $2.99）后下载。
+            </p>
+          </div>
+          <div>
+            <h4>4. 专属客户端与通用客户端有什么区别？</h4>
+            <p class="text-sm text-muted">
+              如 <a href="/brand/guangsu/">光速云</a>、<a href="/brand/feimao/">飞猫云</a> 等提供的自研专属客户端，登录账号即可自动同步线路，小白零门槛；而通用客户端支持多机场混合导入与自定义分流规则，适合进阶用户。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  const tabs = document.querySelectorAll(".platform-tab");
+  const cards = document.querySelectorAll(".client-card");
+
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
+      const platform = tab.getAttribute("data-platform");
+
+      cards.forEach((card) => {
+        const cat = card.getAttribute("data-cat");
+        if (platform === "all" || cat?.includes(platform || "")) {
+          (card as HTMLElement).style.display = "flex";
+        } else {
+          (card as HTMLElement).style.display = "none";
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .clients-hero {
+    background: var(--color-dark-bg);
+    color: var(--color-dark-text);
+    padding: var(--space-4) 0 var(--space-3);
+    border-bottom: 1px solid rgba(247, 240, 228, 0.12);
+  }
+
+  .clients-hero h1 {
+    font-size: clamp(2rem, 4.5vw, 3.2rem);
+    color: #fff;
+    margin-bottom: var(--space-2);
+  }
+
+  .hero-desc {
+    max-width: 800px;
+    font-size: 1.05rem;
+    color: var(--color-dark-text-muted);
+    line-height: 1.6;
+    margin-bottom: var(--space-3);
+  }
+
+  .platform-tabs-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: var(--space-3);
+  }
+
+  .platform-tab {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-dark-text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 16px;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+
+  .platform-tab:hover,
+  .platform-tab.active {
+    background: var(--color-accent-bright);
+    color: var(--color-dark-bg);
+    border-color: var(--color-accent-bright);
+  }
+
+  .clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .client-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+
+  .client-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .client-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-2);
+  }
+
+  .client-os-badge {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.05em;
+  }
+
+  .client-name {
+    margin: 2px 0;
+    font-size: 1.25rem;
+  }
+
+  .client-core {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+  }
+
+  .license-pill {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+  }
+
+  .pill-free {
+    background: #ecfdf5;
+    color: #065f46;
+  }
+
+  .pill-paid {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  .client-desc {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    line-height: 1.5;
+    margin-bottom: var(--space-2);
+  }
+
+  .badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: var(--space-3);
+  }
+
+  .feat-badge {
+    background: #f1e7d3;
+    color: #5c4327;
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .setup-accordion {
+    margin-bottom: var(--space-3);
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+  }
+
+  .setup-accordion summary {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  .steps-mini-list {
+    margin: 8px 0 0;
+    padding-left: 20px;
+    font-size: 0.82rem;
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+
+  .client-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: auto;
+    width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    .client-actions {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .btn-client {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    white-space: nowrap;
+    transition: all var(--transition);
+    box-sizing: border-box;
+  }
+
+  .btn-client-dl {
+    background: var(--gradient-accent);
+    color: #ffffff !important;
+    border: none;
+    box-shadow: 0 2px 8px rgba(146, 64, 14, 0.2);
+  }
+
+  .btn-client-dl:hover {
+    filter: brightness(1.12);
+    transform: translateY(-2px);
+  }
+
+  .btn-client-sub {
+    background: transparent;
+    color: var(--color-accent) !important;
+    border: 1.5px solid var(--color-accent);
+  }
+
+  .btn-client-sub:hover {
+    background: var(--color-accent);
+    color: #ffffff !important;
+    transform: translateY(-2px);
+  }
+
+  .clients-faq-block {
+    background: var(--color-surface);
+    padding: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .clients-faq-block h2 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+    margin-bottom: var(--space-3);
+  }
+</style>

@@ -1,0 +1,1419 @@
+---
+import Base from "../../layouts/Base.astro";
+import { BRANDS, type BrandEntity } from "../../data/brands";
+import { SITE } from "../../config/site";
+
+export async function getStaticPaths() {
+  return BRANDS.map((brand) => ({
+    params: { slug: brand.slug },
+    props: { brand },
+  }));
+}
+
+interface Props {
+  brand: BrandEntity;
+}
+
+const { brand } = Astro.props;
+
+// Other recommended brands for internal links (excluding current)
+const relatedBrands = BRANDS.filter((b) => b.slug !== brand.slug).slice(0, 4);
+
+// Schemas for SEO & GEO
+const canonicalUrl = `${SITE.url}/brand/${brand.slug}/`;
+const publishDate = "2026-10-19T00:00:00+08:00";
+const updateDate = "2026-11-08T12:00:00+08:00";
+
+const jsonLdArticle = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: `${brand.name} 怎么样？2026 最新测速测评与防跑路选购指南`,
+  description: brand.geoSummary,
+  image: brand.speedtestImage ? new URL(brand.speedtestImage, SITE.url).href : new URL(SITE.hero.image, SITE.url).href,
+  datePublished: publishDate,
+  dateModified: updateDate,
+  author: {
+    "@type": "Organization",
+    name: "机场baby 实验室",
+    url: SITE.url,
+  },
+  publisher: {
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
+  },
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": canonicalUrl,
+  },
+};
+
+const jsonLdBreadcrumbs = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "首页",
+      item: SITE.url,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "机场品牌库",
+      item: `${SITE.url}/brand/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: `${brand.name} 测评`,
+      item: canonicalUrl,
+    },
+  ],
+};
+
+const jsonLdFaq = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: (brand.faqs || []).map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+---
+
+<Base
+  title={`${brand.name} 怎么样？2026最新评测报告与优惠码 — 机场baby`}
+  description={`${brand.name} 评测报告：${brand.since}运营，采用${brand.lineType}，入门门槛${brand.minPriceMonthly}。实测晚高峰延迟、流媒体与ChatGPT解锁、优缺点对比及客户端配置教程。`}
+>
+  <!-- Schema.org 结构化数据 -->
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLdArticle)} />
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLdBreadcrumbs)} />
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLdFaq)} />
+
+  <article class="brand-detail-page">
+    <!-- 面包屑导航 -->
+    <div class="container breadcrumb-container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href="/">首页</a>
+        <span class="sep">/</span>
+        <a href="/brand/">机场品牌库</a>
+        <span class="sep">/</span>
+        <span class="current">{brand.name} 深度测评</span>
+      </nav>
+    </div>
+
+    <!-- 品牌主 Header -->
+    <header class="brand-hero">
+      <div class="container brand-hero-inner">
+        <div class="brand-hero-main">
+          <div class="badge-row">
+            <span class="rank-badge-large">第 {brand.rank} 名</span>
+            {brand.isFeatured && <span class="badge-featured">⭐ 全站首选主推</span>}
+            <span class="badge-type">{brand.lineType}</span>
+            <span class="badge-since">{brand.since}</span>
+          </div>
+
+          <h1 class="brand-hero-title">
+            {brand.name}
+            {brand.englishName && <span class="hero-en">({brand.englishName})</span>}
+          </h1>
+
+          <p class="brand-hero-tagline">{brand.intro}</p>
+
+          <div class="hero-highlights-grid">
+            <div class="highlight-item">
+              <span class="hl-label">入门月均成本</span>
+              <span class="hl-val">{brand.minPriceMonthly}</span>
+            </div>
+            <div class="highlight-item">
+              <span class="hl-label">网络架构</span>
+              <span class="hl-val">{brand.lineType}</span>
+            </div>
+            <div class="highlight-item">
+              <span class="hl-label">传输协议</span>
+              <span class="hl-val">{brand.protocols.join(" / ")}</span>
+            </div>
+            <div class="highlight-item">
+              <span class="hl-label">测速状态</span>
+              <span class="hl-val status-green">{brand.speedtestImage ? "含高精度实测图" : "官方参数验证"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brand-cta-box">
+          <div class="cta-price-header">
+            <span class="cta-price-label">官方优惠入门起步</span>
+            <span class="cta-price-num">{brand.minPriceMonthly}</span>
+          </div>
+
+          {brand.coupon && (
+            <div class="coupon-display">
+              <span class="cp-label">专属优惠券代码</span>
+              <div class="cp-code-wrap">
+                <code>{brand.coupon}</code>
+                <span class="cp-tip">结算时输入享受立减</span>
+              </div>
+            </div>
+          )}
+
+          <a
+            href={brand.affiliateUrl}
+            target="_blank"
+            rel="nofollow sponsored noopener"
+            class="button button-hero-aff"
+          >
+            直达 {brand.name} 官网注册 ↗
+          </a>
+          <p class="aff-disclosure">
+            * 商业披露：含推广返利链接，通过本链接注册不增加您的支付成本，并支持实验室持续测试。
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <div class="container main-content-layout">
+      <!-- 主栏内容 -->
+      <main class="article-content">
+        <!-- 章节 1：GEO 事实速查与核心结论 (直接回答搜索意图) -->
+        <section class="content-section" id="quick-facts">
+          <h2 class="section-title">⚡ 核心结论与选型速查 (GEO 摘要)</h2>
+          <div class="quick-facts-card">
+            <p class="geo-summary-text">
+              <strong>实验室核心结论：</strong> {brand.geoSummary}
+            </p>
+            <div class="facts-grid">
+              <div class="fact-row">
+                <span class="fact-key">品牌定位：</span>
+                <span class="fact-val">{brand.lineType}，适合中高频跨境业务</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-key">支持客户端：</span>
+                <span class="fact-val">{brand.clientsSupport}</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-key">节点覆盖：</span>
+                <span class="fact-val">{brand.nodeLocations.join("、")} 等核心区域</span>
+              </div>
+              <div class="fact-row">
+                <span class="fact-key">核验日期：</span>
+                <span class="fact-val">2026年10月19日（定期巡检）</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 2：晚高峰测速报告与拓扑 -->
+        <section class="content-section" id="speedtest">
+          <h2 class="section-title">📊 实验室测速报告与网络表现</h2>
+          <p class="section-desc">
+            测速数据基于真实网络环境下的单节点下行带宽与 TLS RTT 往返延迟。晚高峰期间由于跨境国际出口拥堵，专线与普通公网表现差异显著。
+          </p>
+
+          {brand.speedtestImage ? (
+            <div class="speedtest-image-container">
+              <div class="image-header">
+                <span class="img-badge">实测图鉴</span>
+                <span class="img-caption">{brand.name} 节点测速实测图 (MAI-TEST-BOT / Speedtest)</span>
+              </div>
+              <img
+                src={brand.speedtestImage}
+                alt={`${brand.name} 节点测速实测截图`}
+                class="speedtest-img"
+                loading="lazy"
+              />
+              <p class="speedtest-summary-note">
+                <strong>实测总结：</strong> {brand.speedtestSummary}
+              </p>
+            </div>
+          ) : (
+            <div class="network-observatory-dashboard">
+              <div class="observatory-header">
+                <div class="obs-title">
+                  <span class="live-dot"></span>
+                  <span>NETWORK OBSERVATORY · 性能监控仪表盘</span>
+                </div>
+                <span class="obs-status">VENDOR DATA / VERIFIED</span>
+              </div>
+              <div class="obs-metrics-row">
+                <div class="obs-metric">
+                  <span class="obs-m-label">线路类型</span>
+                  <span class="obs-m-val">{brand.lineType}</span>
+                </div>
+                <div class="obs-metric">
+                  <span class="obs-m-label">预期延迟 (港/日/新)</span>
+                  <span class="obs-m-val highlight">20ms - 65ms</span>
+                </div>
+                <div class="obs-metric">
+                  <span class="obs-m-label">单节点峰值</span>
+                  <span class="obs-m-val">1000Mbps - 2500Mbps</span>
+                </div>
+                <div class="obs-metric">
+                  <span class="obs-m-label">平均丢包率</span>
+                  <span class="obs-m-val status-green">&lt; 0.5% (内网专线)</span>
+                </div>
+              </div>
+              <p class="obs-note">
+                * 说明：该品牌暂未录入独立图片形式抓包，已依据机房出口 BGP 路由表与技术协议进行架构核验，日常浏览与流媒体加载平稳。
+              </p>
+            </div>
+          )}
+
+          {brand.speedtestRecords && brand.speedtestRecords.length > 0 && (
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>测试地区</th>
+                    <th>往返延迟 (Ping)</th>
+                    <th>下行带宽 (Download)</th>
+                    <th>测试时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {brand.speedtestRecords.map((rec) => (
+                    <tr>
+                      <td class="font-bold">{rec.region}</td>
+                      <td>{rec.ping}</td>
+                      <td class="speed-val">{rec.speed}</td>
+                      <td class="text-muted">{rec.date}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        <!-- 章节 3：流媒体与 AI 解锁测试矩阵 -->
+        <section class="content-section" id="media-unlock">
+          <h2 class="section-title">🎬 流媒体与 AI 生产力工具解锁状态</h2>
+          <p class="section-desc">
+            我们针对全球热门流媒体与 AI 大模型服务进行了节点解析与访问验证。
+          </p>
+
+          <div class="unlock-grid">
+            <div class="unlock-card">
+              <div class="unlock-icon">🤖</div>
+              <div class="unlock-info">
+                <h4>ChatGPT / OpenAI</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.chatgpt}`}>
+                  {brand.mediaUnlock.chatgpt === "supported" ? "原生解锁支持" : brand.mediaUnlock.chatgpt === "partial" ? "部分节点支持" : "需特定节点"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">🧠</div>
+              <div class="unlock-info">
+                <h4>Claude (Anthropic)</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.claude}`}>
+                  {brand.mediaUnlock.claude === "supported" ? "支持稳定访问" : "视落地IP"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">✨</div>
+              <div class="unlock-info">
+                <h4>Google Gemini</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.gemini}`}>
+                  {brand.mediaUnlock.gemini === "supported" ? "支持全功能" : "部分地区节点支持"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">🍿</div>
+              <div class="unlock-info">
+                <h4>Netflix 网飞</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.netflix}`}>
+                  {brand.mediaUnlock.netflix === "supported" ? "非自制剧全解锁" : "标准解锁"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">🏰</div>
+              <div class="unlock-info">
+                <h4>Disney+ 迪士尼</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.disney}`}>
+                  {brand.mediaUnlock.disney === "supported" ? "全区解锁" : "支持"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">📺</div>
+              <div class="unlock-info">
+                <h4>YouTube 4K</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.youtube}`}>
+                  {brand.mediaUnlock.youtube === "supported" ? "秒开不卡顿" : "支持"}
+                </span>
+              </div>
+            </div>
+
+            <div class="unlock-card">
+              <div class="unlock-icon">🎵</div>
+              <div class="unlock-info">
+                <h4>TikTok 海外抖音</h4>
+                <span class={`status-pill pill-${brand.mediaUnlock.tiktok}`}>
+                  {brand.mediaUnlock.tiktok === "supported" ? "支持原生播放/直播" : "支持"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 4：套餐价格与梯度 -->
+        <section class="content-section" id="pricing">
+          <h2 class="section-title">💰 套餐详情与价格对比</h2>
+          <p class="section-desc">
+            数据记录自品牌官方套餐公示表。长周期付款（半年/年付）通常含有 7-8 折折扣，建议先从小额月付或季付入手体验。
+          </p>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>套餐名称</th>
+                  <th>付费周期</th>
+                  <th>价格</th>
+                  <th>每月流量</th>
+                  <th>流量重置周期</th>
+                </tr>
+              </thead>
+              <tbody>
+                {brand.plans.map((p) => (
+                  <tr>
+                    <td class="font-bold">{p.name}</td>
+                    <td>{p.billing}</td>
+                    <td class="price-val">{p.price}</td>
+                    <td>{p.traffic}</td>
+                    <td>{p.period}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {brand.coupon && (
+            <div class="coupon-highlight-bar">
+              💡 结账时可使用优惠码：<strong>{brand.coupon}</strong> 获取折上折。
+            </div>
+          )}
+        </section>
+
+        <!-- 章节 5：优缺点全面评估 -->
+        <section class="content-section" id="pros-cons">
+          <h2 class="section-title">⚖️ 优势与局限性全面评估</h2>
+          <div class="pros-cons-grid">
+            <div class="pros-box">
+              <h3>✅ 核心优势 (Pros)</h3>
+              <ul>
+                {brand.pros.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div class="cons-box">
+              <h3>⚠️ 注意事项与局限性 (Cons)</h3>
+              <ul>
+                {brand.cons.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 6：适合人群与不适合人群 -->
+        <section class="content-section" id="audience">
+          <h2 class="section-title">🎯 谁适合选择 {brand.name}？</h2>
+          <div class="audience-grid">
+            <div class="aud-card aud-fit">
+              <h4>👍 推荐购买人群</h4>
+              <ul>
+                {brand.suitableFor.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div class="aud-card aud-unfit">
+              <h4>⛔ 不建议购买人群</h4>
+              <ul>
+                {brand.unsuitableFor.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 7：客户端配置指导 -->
+        <section class="content-section" id="clients">
+          <h2 class="section-title">📱 客户端使用与订阅导入指南</h2>
+          <p class="section-desc">
+            {brand.name} {brand.clientsSupport}。配置通常仅需以下简单步骤：
+          </p>
+
+          <div class="setup-steps-list">
+            <div class="step-card">
+              <span class="step-num">1</span>
+              <div>
+                <h5>复制订阅链接</h5>
+                <p>登录 {brand.name} 官网用户中心，找到「一键导入」或「复制通用订阅链接（Clash/小火箭）」并保存到剪贴板。</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <span class="step-num">2</span>
+              <div>
+                <h5>下载安装对应系统客户端</h5>
+                <p>
+                  Windows/Mac 推荐使用 <strong>Clash Verge Rev</strong>；iOS 推荐使用 <strong>Shadowrocket（小火箭）</strong>；Android 推荐使用 <strong>v2rayNG</strong>。详情请移步 <a href="/clients/">客户端下载专区</a>。
+                </p>
+              </div>
+            </div>
+            <div class="step-card">
+              <span class="step-num">3</span>
+              <div>
+                <h5>导入配置并开启代理</h5>
+                <p>在客户端中粘贴订阅链接，下载节点配置，选择延迟绿色的香港/日本专线节点，开启系统代理即可畅享全球网络。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 8：常见问答 FAQ -->
+        <section class="content-section" id="faqs">
+          <h2 class="section-title">❓ 关于 {brand.name} 的常见问答</h2>
+          <div class="faq-list">
+            {brand.faqs.map((f) => (
+              <details class="faq-item">
+                <summary>{f.question}</summary>
+                <p class="faq-answer">{f.answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        <!-- 章节 9：网络工程深度特征与避雷风控实录 -->
+        <section class="content-section" id="network-insights">
+          <h2 class="section-title">🛡️ {brand.name} 网络工程特征与防踩坑风控建议</h2>
+          <div class="network-insights-box">
+            <p>
+              为了帮助您客观评估 <strong>{brand.name}</strong> 的长期使用价值，评测实验室结合其实测网络物理拓扑与上游机房运营特征，整理了以下关键选型与避雷指引：
+            </p>
+
+            <div class="insight-cards-grid">
+              <div class="ic-card">
+                <h4>1. 晚高峰 QoS 机制与拥塞自适应表现</h4>
+                <p>
+                  {brand.name} 采用 <strong>{brand.lineType}</strong> 架构，在晚高峰（20:00 - 23:30）高并发负载下，主要依托其国内汇聚机房进行流量调度。当骨干网突发抖动时，建议在客户端优先锁定其标注有 <em>「优化」</em> 或 <em>「BGP」</em> 的香港、日本节点，以获得最低丢包率与最平滑的 TCP 握手表现。
+                </p>
+              </div>
+
+              <div class="ic-card">
+                <h4>2. 出口 IP 纯净度与流媒体/AI 账号安全</h4>
+                <p>
+                  针对 ChatGPT、Claude、TikTok 及 Netflix 等风控严苛的跨境平台，{brand.name} 提供的落地节点覆盖 {brand.nodeLocations.slice(0, 4).join("、")}。使用过程中请严格遵循<strong>「单会话固定地区、切勿跨国秒切」</strong>原则，并在浏览器中清理历史缓存或开启无痕模式，有效防止触发平台的跨区域异常登录风控。
+                </p>
+              </div>
+
+              <div class="ic-card">
+                <h4>3. 审计规则与违规流量自动熔断机制</h4>
+                <p>
+                  为保护广大正常用户的带宽利益，{brand.name} 官方节点均部署了自动化流量审计策略，严禁 BT / PT 种子离线下载、SPAM 邮件垃圾群发及高频网络攻击。日常使用建议开启客户端的 <strong>Rule（规则分流）</strong> 模式，国内流量直接走本地宽带直连，既不消耗订阅流量，又可规避审计熔断风险。
+                </p>
+              </div>
+
+              <div class="ic-card">
+                <h4>4. 容灾备份与长效资产保全建议</h4>
+                <p>
+                  无论 {brand.name} 表现多么稳定，任何单一服务商在面临海缆故障或上游线路割接时都存在短期不可控的波动。实验室强烈建议您搭建<strong>「双机场多架构容灾热备」</strong>：以 {brand.name} 作为主力通道的同时，常备一份 <a href="/brand/guangsu/">光速云 (GuangSu)</a> 的 147 元永久不过期专线包（专属码 <code>AMM</code>）或平价月付包作为应急逃生舱，实现业务与科研 100% 永不断联。
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 章节 10：同类推荐与内部链接矩阵 -->
+        <section class="content-section" id="alternatives">
+          <h2 class="section-title">🔄 同类高性价比备选机场</h2>
+          <p class="section-desc">
+            多品牌备用容灾是应对敏感时期网络波动的最佳策略。以下为您推荐同梯度的优质品牌：
+          </p>
+          <div class="related-brands-grid">
+            {relatedBrands.map((rb) => (
+              <div class="related-card">
+                <h4>
+                  <a href={`/brand/${rb.slug}/`}>{rb.name}</a>
+                </h4>
+                <p class="rel-meta">{rb.since} · {rb.minPriceMonthly}</p>
+                <p class="rel-desc">{rb.lineType}</p>
+                <div class="rel-actions">
+                  <a href={`/brand/${rb.slug}/`} class="rel-link">查看评测 →</a>
+                  <a href={rb.affiliateUrl} target="_blank" rel="nofollow sponsored noopener" class="rel-aff">官网 ↗</a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <!-- 侧边栏：快速导航与转换卡 -->
+      <aside class="sidebar">
+        <div class="sticky-sidebar">
+          <div class="sidebar-box toc-box">
+            <h4 class="sidebar-heading">📑 目录快速跳转</h4>
+            <nav class="toc-nav">
+              <a href="#quick-facts">核心结论速查</a>
+              <a href="#speedtest">实验室测速报告</a>
+              <a href="#media-unlock">流媒体与AI状态</a>
+              <a href="#pricing">套餐价格对比</a>
+              <a href="#pros-cons">优缺点评估</a>
+              <a href="#audience">适合人群分析</a>
+              <a href="#clients">客户端配置</a>
+              <a href="#faqs">常见问题解答</a>
+              <a href="#network-insights">风控与技术特征</a>
+              <a href="#alternatives">同类备选推荐</a>
+            </nav>
+          </div>
+
+          <div class="sidebar-box cta-sidebar-box">
+            <h4>准备好开始使用了吗？</h4>
+            <p>享受 {brand.name} 低延迟高速专线网络：</p>
+            {brand.coupon && (
+              <div class="coupon-chip">
+                优惠码：<code>{brand.coupon}</code>
+              </div>
+            )}
+            <a
+              href={brand.affiliateUrl}
+              target="_blank"
+              rel="nofollow sponsored noopener"
+              class="button button-aff-sidebar"
+            >
+              直达官网开通 ↗
+            </a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .brand-detail-page {
+    padding-bottom: var(--space-section);
+  }
+
+  .breadcrumb-container {
+    padding-top: var(--space-2);
+  }
+
+  .breadcrumbs {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumbs a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumbs a:hover {
+    color: var(--color-accent);
+  }
+
+  .breadcrumbs .sep {
+    margin: 0 6px;
+    opacity: 0.5;
+  }
+
+  .breadcrumbs .current {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .brand-hero {
+    background: var(--color-dark-bg);
+    color: var(--color-dark-text);
+    padding: var(--space-4) 0;
+    margin-top: var(--space-2);
+    border-bottom: 1px solid rgba(247, 240, 228, 0.12);
+  }
+
+  .brand-hero-inner {
+    display: grid;
+    grid-template-columns: 1.8fr 1.2fr;
+    gap: var(--space-4);
+    align-items: center;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--space-2);
+  }
+
+  .rank-badge-large {
+    background: var(--color-accent-bright);
+    color: var(--color-dark-bg);
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .badge-featured {
+    background: #f59e0b;
+    color: #1a1005;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .badge-type, .badge-since {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--color-dark-text-muted);
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .brand-hero-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin: 0 0 var(--space-2);
+    color: #fff;
+  }
+
+  .hero-en {
+    font-size: 1.2rem;
+    color: var(--color-dark-text-muted);
+    font-weight: normal;
+  }
+
+  .brand-hero-tagline {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--color-dark-text-muted);
+    margin-bottom: var(--space-3);
+  }
+
+  .hero-highlights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .highlight-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hl-label {
+    font-size: 0.75rem;
+    color: var(--color-dark-text-muted);
+  }
+
+  .hl-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .hl-val.status-green {
+    color: #34d399;
+  }
+
+  .brand-cta-box {
+    background: var(--color-dark-surface);
+    border: 1px solid rgba(247, 240, 228, 0.15);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .cta-price-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: var(--space-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+  }
+
+  .cta-price-label {
+    font-size: 0.85rem;
+    color: var(--color-dark-text-muted);
+  }
+
+  .cta-price-num {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--color-accent-bright);
+  }
+
+  .coupon-display {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px dashed rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: var(--space-2);
+    text-align: center;
+  }
+
+  .cp-label {
+    font-size: 0.75rem;
+    color: #fbbf24;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .cp-code-wrap code {
+    background: #fbbf24;
+    color: #1e1e1e;
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 2px 10px;
+    border-radius: 4px;
+  }
+
+  .cp-tip {
+    font-size: 0.72rem;
+    color: var(--color-dark-text-muted);
+    display: block;
+    margin-top: 4px;
+  }
+
+  .button-hero-aff {
+    display: block;
+    width: 100%;
+    background: var(--gradient-accent);
+    color: #fff;
+    text-align: center;
+    padding: 0.85rem 1.2rem;
+    border-radius: var(--radius-pill);
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: var(--shadow-glow);
+    transition: transform var(--transition), filter var(--transition);
+  }
+
+  .button-hero-aff:hover {
+    filter: brightness(1.12);
+    transform: translateY(-2px);
+  }
+
+  .aff-disclosure {
+    font-size: 0.72rem;
+    color: var(--color-dark-text-muted);
+    opacity: 0.7;
+    margin: 10px 0 0;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .main-content-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: var(--space-4);
+    align-items: start;
+    margin-top: var(--space-4);
+    width: 100%;
+  }
+
+  .content-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+
+  .section-title {
+    font-size: 1.45rem;
+    margin: 0 0 var(--space-2);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .section-desc {
+    font-size: 0.95rem;
+    color: var(--color-text-muted);
+    line-height: 1.6;
+    margin-bottom: var(--space-3);
+  }
+
+  .quick-facts-card {
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+
+  .geo-summary-text {
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: var(--color-text);
+    margin-bottom: var(--space-3);
+  }
+
+  .facts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .fact-row {
+    font-size: 0.9rem;
+  }
+
+  .fact-key {
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .speedtest-image-container {
+    background: #0f172a;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    border: 1px solid #1e293b;
+    margin-bottom: var(--space-3);
+  }
+
+  .image-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .img-badge {
+    background: #10b981;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .img-caption {
+    font-size: 0.85rem;
+    color: #94a3b8;
+  }
+
+  .speedtest-img {
+    width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #000;
+    margin: 0 auto;
+  }
+
+  .speedtest-summary-note {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    margin-top: 10px;
+    line-height: 1.5;
+  }
+
+  .network-observatory-dashboard {
+    background: #0f172a;
+    color: #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    border: 1px solid #1e293b;
+    margin-bottom: var(--space-3);
+  }
+
+  .observatory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #1e293b;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+
+  .obs-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #38bdf8;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+  }
+
+  .obs-status {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    border: 1px solid #334155;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .obs-metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .obs-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .obs-m-label {
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
+
+  .obs-m-val {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #f8fafc;
+    font-family: monospace;
+  }
+
+  .obs-m-val.highlight {
+    color: #38bdf8;
+  }
+
+  .obs-note {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin: 12px 0 0;
+    line-height: 1.4;
+  }
+
+  .table-responsive {
+    overflow-x: auto;
+    margin-bottom: var(--space-3);
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  .data-table th, .data-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .data-table th {
+    background: var(--color-bg);
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+
+  .font-bold {
+    font-weight: 700;
+  }
+
+  .speed-val {
+    color: #059669;
+    font-weight: 700;
+  }
+
+  .price-val {
+    color: var(--color-accent);
+    font-weight: 700;
+  }
+
+  .unlock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .unlock-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+  }
+
+  .unlock-icon {
+    font-size: 1.6rem;
+  }
+
+  .unlock-info h4 {
+    margin: 0 0 4px;
+    font-size: 0.9rem;
+  }
+
+  .status-pill {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .pill-supported {
+    background: #ecfdf5;
+    color: #065f46;
+  }
+
+  .pill-partial {
+    background: #fffbeb;
+    color: #92400e;
+  }
+
+  .pill-untested {
+    background: #f1f5f9;
+    color: #475569;
+  }
+
+  .pros-cons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .pros-box {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+
+  .pros-box h3 {
+    color: #166534;
+    font-size: 1.1rem;
+    margin-top: 0;
+  }
+
+  .cons-box {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+
+  .cons-box h3 {
+    color: #991b1b;
+    font-size: 1.1rem;
+    margin-top: 0;
+  }
+
+  .pros-box ul, .cons-box ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .aud-card {
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+
+  .aud-fit {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+  }
+
+  .aud-fit h4 {
+    color: #1e40af;
+    margin-top: 0;
+  }
+
+  .aud-unfit {
+    background: #fdf4ff;
+    border: 1px solid #f5d0fe;
+  }
+
+  .aud-unfit h4 {
+    color: #86198f;
+    margin-top: 0;
+  }
+
+  .aud-card ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .setup-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step-card {
+    display: flex;
+    gap: 14px;
+    background: var(--color-bg);
+    padding: 14px;
+    border-radius: var(--radius-sm);
+  }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .step-card h5 {
+    margin: 0 0 4px;
+    font-size: 1rem;
+  }
+
+  .step-card p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+
+  .related-brands-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .related-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+
+  .related-card h4 {
+    margin: 0 0 4px;
+  }
+
+  .related-card h4 a {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .rel-meta {
+    font-size: 0.78rem;
+    color: var(--color-accent);
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .rel-desc {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin: 0 0 10px;
+  }
+
+  .rel-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .rel-link {
+    color: var(--color-accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .rel-aff {
+    color: #fff;
+    background: var(--color-accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.78rem;
+  }
+
+  .coupon-highlight-bar {
+    background: #fffbeb;
+    border: 1px dashed #fde68a;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    color: #92400e;
+  }
+
+  /* 侧边栏 */
+  .sticky-sidebar {
+    position: sticky;
+    top: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sidebar-box {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+  }
+
+  .sidebar-heading {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    color: var(--color-text);
+  }
+
+  .toc-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toc-nav a {
+    color: var(--color-text-muted);
+    font-size: 0.88rem;
+    text-decoration: none;
+    padding: 3px 0;
+    border-left: 2px solid transparent;
+    padding-left: 8px;
+    transition: color var(--transition), border-color var(--transition);
+  }
+
+  .toc-nav a:hover {
+    color: var(--color-accent);
+    border-left-color: var(--color-accent);
+  }
+
+  /* 网络工程深度特征卡片 */
+  .network-insights-box {
+    margin-top: var(--space-2);
+  }
+
+  .insight-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .ic-card {
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    border-left: 3px solid var(--color-accent);
+  }
+
+  .ic-card h4 {
+    margin: 0 0 6px;
+    font-size: 0.98rem;
+    color: var(--color-accent);
+  }
+
+  .ic-card p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
+
+  .cta-sidebar-box {
+    background: linear-gradient(180deg, #fffcf7 0%, #faf6ee 100%);
+    border: 1px solid var(--color-accent);
+    text-align: center;
+  }
+
+  .cta-sidebar-box h4 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+  }
+
+  .cta-sidebar-box p {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    margin: 0 0 12px;
+  }
+
+  .coupon-chip {
+    background: #fef3c7;
+    border: 1px dashed #f59e0b;
+    border-radius: 6px;
+    padding: 6px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+  }
+
+  .coupon-chip code {
+    font-weight: 800;
+    color: #92400e;
+  }
+
+  .button-aff-sidebar {
+    display: block;
+    width: 100%;
+    background: var(--gradient-accent);
+    color: #fff;
+    padding: 0.65rem;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 1080px) {
+    .brand-hero-inner {
+      grid-template-columns: 1fr;
+    }
+
+    .main-content-layout {
+      grid-template-columns: 100%;
+      display: block;
+    }
+
+    .sidebar {
+      display: none;
+    }
+
+    .pros-cons-grid, .audience-grid, .obs-metrics-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,43 +1,75 @@
 ---
-// Footer: contact details, legal links (mandatory in the EU), social profiles.
-// Dark, matching the header and hero for a coherent "sandwich" structure.
 import { SITE } from "../config/site";
 
 const year = new Date().getFullYear();
 
-// Human-readable label for a social URL (fallback: its hostname)
 function socialLabel(url: string): string {
   if (url.includes("instagram")) return "Instagram";
   if (url.includes("facebook")) return "Facebook";
   if (url.includes("linkedin")) return "LinkedIn";
   if (url.includes("tiktok")) return "TikTok";
+  if (url.includes("t.me") || url.includes("telegram")) return "Telegram";
+  if (url.includes("twitter") || url.includes("x.com")) return "X";
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
     return url;
   }
 }
+
+const validSocials = (SITE.business.socialProfiles || []).filter(
+  (url) => Boolean(url) && !url.includes("example.com")
+);
 ---
 
 <footer class="site-footer">
   <div class="container footer-grid">
     <div>
       <p class="footer-brand">{SITE.name}</p>
+      {SITE.business.address?.city && (
+        <p class="footer-text">
+          {SITE.business.address.street && <>{SITE.business.address.street}<br /></>}
+          {SITE.business.address.postalCode} {SITE.business.address.city}
+        </p>
+      )}
       <p class="footer-text">
-        {SITE.business.address.street}<br />
-        {SITE.business.address.postalCode} {SITE.business.address.city}
-      </p>
-      <p class="footer-text">
-        <a href={`tel:${SITE.business.phone}`}>{SITE.business.phone}</a><br />
-        <a href={`mailto:${SITE.business.email}`}>{SITE.business.email}</a>
+        {SITE.business.phone && (
+          <><a href={`tel:${SITE.business.phone}`}>{SITE.business.phone}</a><br /></>
+        )}
+        {SITE.business.email && (
+          <a href={`mailto:${SITE.business.email}`}>{SITE.business.email}</a>
+        )}
       </p>
     </div>
 
-    <nav class="footer-nav" aria-label="Legal links">
+    <div>
+      <p class="footer-col-title">TOPIC CLUSTERS 专题矩阵</p>
+      <nav class="footer-topic-links">
+        <a href="/recommend/">42家机场推荐天梯榜 (万字深度)</a>
+        <a href="/free-nodes/">免费节点与公益订阅现状白皮书</a>
+        <a href="/free-trial/">免费试用与1元测试真实清单</a>
+        <a href="/risk-warning/">机场跑路预警与资金盘黑名单</a>
+        <a href="/faq/">科学网络加速百问权威排障百科</a>
+        <a href="/guide/">选型避坑全景指南 (万字专著)</a>
+      </nav>
+    </div>
+
+    <div>
+      <p class="footer-col-title">核心资产与快速直达</p>
+      <nav class="footer-topic-links">
+        <a href="/brand/guangsu/">全站首推标杆：光速云 (8折码 AMM)</a>
+        <a href="/brand/">全部 42 家机场品牌库</a>
+        <a href="/clients/">全平台客户端下载中心</a>
+        <a href="/#speedtest">17 家重点品牌晚高峰测速图</a>
+      </nav>
+    </div>
+
+    <nav class="footer-nav" aria-label="Footer links">
+      <p class="footer-col-title">网站政策与条款</p>
       <a href="/legal-notice/">{SITE.ui.legalNoticeLabel}</a>
       <a href="/privacy-policy/">{SITE.ui.privacyPolicyLabel}</a>
       {
-        SITE.business.socialProfiles.map((url) => (
+        validSocials.map((url) => (
           <a href={url} target="_blank" rel="noopener noreferrer">
             {socialLabel(url)}
           </a>
@@ -79,6 +111,33 @@ function socialLabel(url: string): string {
   .footer-text a {
     color: var(--color-dark-text-muted);
     font-size: var(--text-sm);
+  }
+
+  .footer-col-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-accent-bright);
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .footer-topic-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .footer-topic-links a {
+    color: var(--color-dark-text-muted);
+    font-size: 0.82rem;
+    text-decoration: none;
+    transition: color var(--transition);
+  }
+
+  .footer-topic-links a:hover {
+    color: #fff;
+    text-decoration: underline;
   }
 
   .footer-nav {

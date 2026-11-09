@@ -1,8 +1,4 @@
 ---
-// SEO component: every <head> tag related to search and sharing.
-// Used by the Base layout — each page passes its own title/description.
-// This is the theme's "technical SEO" module: canonical URL, Open Graph,
-// Twitter cards. The JSON-LD LocalBusiness markup is a separate component.
 import { SITE } from "../config/site";
 
 interface Props {
@@ -12,32 +8,71 @@ interface Props {
   image?: string;
   /** true on pages that must not be indexed (legal notice, 404...) */
   noindex?: boolean;
+  publishedTime?: string;
+  modifiedTime?: string;
+  type?: "website" | "article";
 }
 
-const { title, description, image = SITE.hero.image, noindex = false } = Astro.props;
+const {
+  title,
+  description,
+  image = SITE.hero.image,
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  type = "website",
+} = Astro.props;
 
-// Absolute canonical URL of the current page — essential to avoid duplicate
-// content issues (www/non-www, with/without trailing slash...)
-const canonical = new URL(Astro.url.pathname, Astro.site);
-const absoluteImage = new URL(image, Astro.site);
+// Absolute canonical URL of the current page (Guaranteed official domain & trailing slash)
+const baseUrl = Astro.site ? new URL(Astro.site) : new URL(SITE.url);
+let pathname = Astro.url.pathname;
+if (!pathname.endsWith("/") && !pathname.endsWith(".html")) {
+  pathname += "/";
+}
+const canonical = new URL(pathname, baseUrl);
+const absoluteImage = new URL(image, baseUrl);
 ---
 
 <title>{title}</title>
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
-{noindex && <meta name="robots" content="noindex" />}
+<link rel="canonical" href={canonical.href} />
 
-<!-- Open Graph: link preview when shared (Facebook, LinkedIn, WhatsApp...) -->
-<meta property="og:type" content="website" />
+{
+  noindex ? (
+    <meta name="robots" content="noindex, nofollow" />
+  ) : (
+    <>
+      <!-- 通用搜索引擎爬取规则指令 -->
+      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+      <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+      <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large" />
+      <meta name="baiduspider" content="index, follow" />
+      <meta name="yisouspider" content="index, follow" />
+    </>
+  )
+}
+
+<!-- 搜索引擎站长平台验证代码预留 (从 site.ts 动态挂载，无需手动修改代码) -->
+{SITE.verification?.google && <meta name="google-site-verification" content={SITE.verification.google} />}
+{SITE.verification?.bing && <meta name="msvalidate.01" content={SITE.verification.bing} />}
+{SITE.verification?.shenma && <meta name="shenma-site-verification" content={SITE.verification.shenma} />}
+{SITE.verification?.baidu && <meta name="baidu-site-verification" content={SITE.verification.baidu} />}
+
+<!-- Open Graph: link preview when shared (Facebook, LinkedIn, WhatsApp, Telegram, etc.) -->
 <meta property="og:site_name" content={SITE.name} />
+<meta property="og:type" content={type} />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
-<meta property="og:url" content={canonical} />
-<meta property="og:image" content={absoluteImage} />
+<meta property="og:url" content={canonical.href} />
+<meta property="og:image" content={absoluteImage.href} />
+<meta property="og:image:alt" content={title} />
 <meta property="og:locale" content={SITE.ogLocale} />
+{publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 
-<!-- Twitter/X card -->
+<!-- Twitter / X Card -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={absoluteImage} />
+<meta name="twitter:image" content={absoluteImage.href} />
+<meta name="twitter:image:alt" content={title} />

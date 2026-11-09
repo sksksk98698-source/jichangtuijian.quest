@@ -12,7 +12,7 @@ interface Props {
   description: string;
   /** true on pages that must not be indexed (legal, 404) */
   noindex?: boolean;
-  /** The JSON-LD LocalBusiness markup is only useful on the home page */
+  /** The JSON-LD markup is only useful on the home page */
   withJsonLd?: boolean;
 }
 
@@ -24,8 +24,9 @@ const { title, description, noindex = false, withJsonLd = false } = Astro.props;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1d140d" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
     <Seo title={title} description={description} noindex={noindex} />
     {withJsonLd && <JsonLdLocalBusiness />}
   </head>
